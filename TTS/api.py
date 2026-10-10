@@ -6,10 +6,10 @@ from typing import Union
 import numpy as np
 from torch import nn
 
+from TTS.config import load_config
 from TTS.utils.audio.numpy_transforms import save_wav
 from TTS.utils.manage import ModelManager
 from TTS.utils.synthesizer import Synthesizer
-from TTS.config import load_config
 
 
 class TTS(nn.Module):
@@ -99,7 +99,7 @@ class TTS(nn.Module):
             isinstance(self.model_name, str)
             and "xtts" in self.model_name
             or self.config
-            and ("xtts" in self.config.model or len(self.config.languages) > 1)
+            and ("xtts" in self.config.model or len(getattr(self.config, "languages", None) or []) > 1)
         ):
             return True
         if hasattr(self.synthesizer.tts_model, "language_manager") and self.synthesizer.tts_model.language_manager:

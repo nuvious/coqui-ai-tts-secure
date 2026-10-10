@@ -19,6 +19,7 @@ from TTS.encoder.utils.visual import plot_embeddings
 from TTS.tts.datasets import load_tts_samples
 from TTS.utils.audio import AudioProcessor
 from TTS.utils.generic_utils import count_parameters, remove_experiment_folder
+from TTS.utils.io import register_safe_globals
 from TTS.utils.samplers import PerfectBatchSampler
 from TTS.utils.training import check_update
 
@@ -270,6 +271,7 @@ def main(args):  # pylint: disable=redefined-outer-name
     global meta_data_eval
     global train_classes
 
+    register_safe_globals()
     ap = AudioProcessor(**c.audio)
     model = setup_encoder_model(c)
 

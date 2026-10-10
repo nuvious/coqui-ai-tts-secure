@@ -9,6 +9,7 @@ import torchaudio
 from scipy.io.wavfile import read
 
 from TTS.utils.audio.torch_transforms import TorchSTFT
+from TTS.utils.io import load_fsspec
 
 
 def load_wav_to_torch(full_path):
@@ -121,7 +122,7 @@ def load_voice(voice: str, extra_voice_dirs: List[str] = []):
     voices = get_voices(extra_voice_dirs)
     paths = voices[voice]
     if len(paths) == 1 and paths[0].endswith(".pth"):
-        return None, torch.load(paths[0])
+        return None, load_fsspec(paths[0])
     else:
         conds = []
         for cond_path in paths:

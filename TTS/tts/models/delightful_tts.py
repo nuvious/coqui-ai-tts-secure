@@ -7,7 +7,6 @@ from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 import torch
 import torch.distributed as dist
-import torchaudio
 from coqpit import Coqpit
 from librosa.filters import mel as librosa_mel_fn
 from torch import nn
@@ -31,6 +30,7 @@ from TTS.utils.audio.numpy_transforms import build_mel_basis, compute_f0
 from TTS.utils.audio.numpy_transforms import db_to_amp as db_to_amp_numpy
 from TTS.utils.audio.numpy_transforms import mel_to_wav as mel_to_wav_numpy
 from TTS.utils.audio.processor import AudioProcessor
+from TTS.utils.audio.torch_io import load_audio_tensor
 from TTS.utils.io import load_fsspec
 from TTS.vocoder.layers.losses import MultiScaleSTFTLoss
 from TTS.vocoder.models.hifigan_generator import HifiganGenerator
@@ -133,9 +133,7 @@ def load_audio(file_path: str):
     Return Shapes:
         - x: :math:`[1, T]`
     """
-    x, sr = torchaudio.load(
-        file_path,
-    )
+    x, sr = load_audio_tensor(file_path)
     assert (x > 1).sum() + (x < -1).sum() == 0
     return x, sr
 
@@ -1098,7 +1096,7 @@ class DelightfulTTS(BaseTTSE2E):
 
     def train_log(
         self, batch: dict, outputs: dict, logger: "Logger", assets: dict, steps: int
-    ):  # pylint: disable=no-self-use, unused-argument
+    ):  # pylint: disable=unused-argument
         """Create visualizations and waveform examples.
 
         For example, here you can plot spectrograms and generate sample sample waveforms from these spectrograms to
@@ -1566,7 +1564,7 @@ class DelightfulTTS(BaseTTSE2E):
         save_state = self.get_state_dict(config, checkpoint_path)  # pylint: disable=too-many-function-args
         save_state["pitch_mean"] = self.pitch_mean
         save_state["pitch_std"] = self.pitch_std
-        torch.save(save_state, checkpoint_path)
+        torch.save(save_state, checkpoint_path)  # nosemgrep  (saving plain dicts and tensors)
 
     def on_train_step_start(self, trainer) -> None:
         """Enable the discriminator training based on `steps_to_start_discriminator`

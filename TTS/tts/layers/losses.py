@@ -540,7 +540,7 @@ def mse_loss_custom(x, y):
 class MDNLoss(nn.Module):
     """Mixture of Density Network Loss as described in https://arxiv.org/pdf/2003.01950.pdf."""
 
-    def forward(self, logp, text_lengths, mel_lengths):  # pylint: disable=no-self-use
+    def forward(self, logp, text_lengths, mel_lengths):
         """
         Shapes:
             mu: [B, D, T]

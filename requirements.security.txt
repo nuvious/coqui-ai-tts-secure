@@ -1,0 +1,7 @@
+bandit[sarif,toml]>=1.8
+pip-audit>=2.9
+ruff>=0.12
+semgrep>=1.100
+zizmor>=1.6
+griffe>=1.6
+picklescan>=0.0.26

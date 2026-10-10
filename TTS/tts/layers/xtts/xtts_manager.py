@@ -1,8 +1,9 @@
-import torch
+from TTS.utils.io import load_fsspec
+
 
 class SpeakerManager():
     def __init__(self, speaker_file_path=None):
-        self.speakers = torch.load(speaker_file_path)
+        self.speakers = load_fsspec(speaker_file_path)
 
     @property
     def name_to_id(self):

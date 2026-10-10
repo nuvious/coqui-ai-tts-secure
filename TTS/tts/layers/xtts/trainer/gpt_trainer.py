@@ -1,3 +1,5 @@
+import os
+import tempfile
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Union
 
@@ -89,7 +91,7 @@ class GPTTrainer(BaseTTS):
 
         # load GPT if available
         if self.args.gpt_checkpoint:
-            gpt_checkpoint = torch.load(self.args.gpt_checkpoint, map_location=torch.device("cpu"))
+            gpt_checkpoint = load_fsspec(self.args.gpt_checkpoint, map_location=torch.device("cpu"))
             # deal with coqui Trainer exported model
             if "model" in gpt_checkpoint.keys() and "config" in gpt_checkpoint.keys():
                 print("Coqui Trainer checkpoint detected! Converting it!")
@@ -182,7 +184,7 @@ class GPTTrainer(BaseTTS):
 
         self.dvae.eval()
         if self.args.dvae_checkpoint:
-            dvae_checkpoint = torch.load(self.args.dvae_checkpoint, map_location=torch.device("cpu"))
+            dvae_checkpoint = load_fsspec(self.args.dvae_checkpoint, map_location=torch.device("cpu"))
             self.dvae.load_state_dict(dvae_checkpoint, strict=False)
             print(">> DVAE weights restored from:", self.args.dvae_checkpoint)
         else:
@@ -476,11 +478,15 @@ class GPTTrainer(BaseTTS):
         checkpoint_path,
         eval=False,
         strict=True,
-        cache_storage="/tmp/tts_cache",
+        cache_storage=None,
         target_protocol="s3",
-        target_options={"anon": True},
-    ):  # pylint: disable=unused-argument, disable=W0201, disable=W0102, redefined-builtin
+        target_options=None,
+    ):  # pylint: disable=unused-argument, disable=W0201, redefined-builtin
         """Load the model checkpoint and setup for training or inference"""
+        if cache_storage is None:
+            cache_storage = os.path.join(tempfile.gettempdir(), "tts_cache")
+        if target_options is None:
+            target_options = {"anon": True}
 
         state = self.xtts.get_compatible_checkpoint_state_dict(checkpoint_path)
 

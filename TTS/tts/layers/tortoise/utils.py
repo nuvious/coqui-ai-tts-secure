@@ -1,7 +1,9 @@
 import os
-from urllib import request
 
+import requests
 from tqdm import tqdm
+
+REQUEST_TIMEOUT = (10, 300)
 
 DEFAULT_MODELS_DIR = os.path.join(os.path.expanduser("~"), ".cache", "tortoise", "models")
 MODELS_DIR = os.environ.get("TORTOISE_MODELS_DIR", DEFAULT_MODELS_DIR)
@@ -29,8 +31,16 @@ def download_models(specific_models=None):
         if os.path.exists(model_path):
             continue
         print(f"Downloading {model_name} from {url}...")
-        with tqdm(unit="B", unit_scale=True, unit_divisor=1024, miniters=1) as t:
-            request.urlretrieve(url, model_path, lambda nb, bs, fs, t=t: t.update(nb * bs - t.n))
+        with requests.get(url, stream=True, timeout=REQUEST_TIMEOUT) as r:
+            r.raise_for_status()
+            total = int(r.headers.get("content-length", 0))
+            with (
+                tqdm(unit="B", unit_scale=True, unit_divisor=1024, miniters=1, total=total or None) as t,
+                open(model_path, "wb") as f,
+            ):
+                for chunk in r.iter_content(chunk_size=1024 * 1024):
+                    f.write(chunk)
+                    t.update(len(chunk))
         print("Done.")
 
 

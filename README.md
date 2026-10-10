@@ -30,17 +30,10 @@ ______________________________________________________________________
 [![Downloads](https://pepy.tech/badge/tts)](https://pepy.tech/project/tts)
 [![DOI](https://zenodo.org/badge/265612440.svg)](https://zenodo.org/badge/latestdoi/265612440)
 
-![GithubActions](https://github.com/coqui-ai/TTS/actions/workflows/aux_tests.yml/badge.svg)
-![GithubActions](https://github.com/coqui-ai/TTS/actions/workflows/data_tests.yml/badge.svg)
-![GithubActions](https://github.com/coqui-ai/TTS/actions/workflows/docker.yaml/badge.svg)
-![GithubActions](https://github.com/coqui-ai/TTS/actions/workflows/inference_tests.yml/badge.svg)
-![GithubActions](https://github.com/coqui-ai/TTS/actions/workflows/style_check.yml/badge.svg)
-![GithubActions](https://github.com/coqui-ai/TTS/actions/workflows/text_tests.yml/badge.svg)
-![GithubActions](https://github.com/coqui-ai/TTS/actions/workflows/tts_tests.yml/badge.svg)
-![GithubActions](https://github.com/coqui-ai/TTS/actions/workflows/vocoder_tests.yml/badge.svg)
-![GithubActions](https://github.com/coqui-ai/TTS/actions/workflows/zoo_tests0.yml/badge.svg)
-![GithubActions](https://github.com/coqui-ai/TTS/actions/workflows/zoo_tests1.yml/badge.svg)
-![GithubActions](https://github.com/coqui-ai/TTS/actions/workflows/zoo_tests2.yml/badge.svg)
+![GithubActions](https://github.com/nuvious/coqui-ai-tts-secure/actions/workflows/tests.yml/badge.svg)
+![GithubActions](https://github.com/nuvious/coqui-ai-tts-secure/actions/workflows/lint.yml/badge.svg)
+![GithubActions](https://github.com/nuvious/coqui-ai-tts-secure/actions/workflows/security.yml/badge.svg)
+![GithubActions](https://github.com/nuvious/coqui-ai-tts-secure/actions/workflows/docker.yaml/badge.svg)
 [![Docs](<https://readthedocs.org/projects/tts/badge/?version=latest&style=plastic>)](https://tts.readthedocs.io/en/latest/)
 
 </div>
@@ -144,7 +137,7 @@ Underlined "TTS*" and "Judy*" are **internal** 🐸TTS models that are not relea
 You can also help us implement more models.
 
 ## Installation
-🐸TTS is tested on Ubuntu 18.04 with **python >= 3.9, < 3.12.**.
+🐸TTS is tested on Ubuntu 22.04 with **python >= 3.10, < 3.14.**.
 
 If you are only interested in [synthesizing speech](https://tts.readthedocs.io/en/latest/inference.html) with the released 🐸TTS models, installing from PyPI is the easiest option.
 

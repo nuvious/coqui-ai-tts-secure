@@ -11,8 +11,9 @@ from TTS.tts.layers.xtts.gpt import GPT
 from TTS.tts.layers.xtts.hifigan_decoder import HifiDecoder
 from TTS.tts.layers.xtts.stream_generator import init_stream_support
 from TTS.tts.layers.xtts.tokenizer import VoiceBpeTokenizer, split_sentence
-from TTS.tts.layers.xtts.xtts_manager import SpeakerManager, LanguageManager
+from TTS.tts.layers.xtts.xtts_manager import LanguageManager, SpeakerManager
 from TTS.tts.models.base_tts import BaseTTS
+from TTS.utils.audio.torch_io import load_audio_tensor
 from TTS.utils.io import load_fsspec
 
 init_stream_support()
@@ -61,7 +62,7 @@ def wav_to_mel_cloning(
     mel = mel_stft(wav)
     mel = torch.log(torch.clamp(mel, min=1e-5))
     if mel_norms is None:
-        mel_norms = torch.load(mel_norms_file, map_location=device)
+        mel_norms = load_fsspec(mel_norms_file, map_location=device)
     mel = mel / mel_norms.unsqueeze(0).unsqueeze(-1)
     return mel
 
@@ -69,8 +70,8 @@ def wav_to_mel_cloning(
 def load_audio(audiopath, sampling_rate):
     # better load setting following: https://github.com/faroit/python_audio_loading_benchmark
 
-    # torchaudio should chose proper backend to load audio depending on platform
-    audio, lsr = torchaudio.load(audiopath)
+    # torchaudio 2.9 moved decoding into the optional torchcodec package, so soundfile does the reading.
+    audio, lsr = load_audio_tensor(audiopath)
 
     # stereo to mono if needed
     if audio.size(0) != 1:
@@ -274,7 +275,7 @@ class Xtts(BaseTTS):
             for i in range(0, audio.shape[1], 22050 * chunk_length):
                 audio_chunk = audio[:, i : i + 22050 * chunk_length]
 
-                # if the chunk is too short ignore it 
+                # if the chunk is too short ignore it
                 if audio_chunk.size(-1) < 22050 * 0.33:
                     continue
 
@@ -410,12 +411,14 @@ class Xtts(BaseTTS):
         if speaker_id is not None:
             gpt_cond_latent, speaker_embedding = self.speaker_manager.speakers[speaker_id].values()
             return self.inference(text, language, gpt_cond_latent, speaker_embedding, **settings)
-        settings.update({
-            "gpt_cond_len": config.gpt_cond_len,
-            "gpt_cond_chunk_len": config.gpt_cond_chunk_len,
-            "max_ref_len": config.max_ref_len,
-            "sound_norm_refs": config.sound_norm_refs,
-        })
+        settings.update(
+            {
+                "gpt_cond_len": config.gpt_cond_len,
+                "gpt_cond_chunk_len": config.gpt_cond_chunk_len,
+                "max_ref_len": config.max_ref_len,
+                "sound_norm_refs": config.sound_norm_refs,
+            }
+        )
         return self.full_inference(text, speaker_wav, language, **settings)
 
     @torch.inference_mode()
@@ -477,7 +480,7 @@ class Xtts(BaseTTS):
             Generated audio clip(s) as a torch tensor. Shape 1,S if k=1 else, (k,1,S) where S is the sample length.
             Sample rate is 24kHz.
         """
-        (gpt_cond_latent, speaker_embedding) = self.get_conditioning_latents(
+        gpt_cond_latent, speaker_embedding = self.get_conditioning_latents(
             audio_path=ref_audio_path,
             gpt_cond_len=gpt_cond_len,
             gpt_cond_chunk_len=gpt_cond_chunk_len,

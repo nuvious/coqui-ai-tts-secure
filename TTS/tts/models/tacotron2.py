@@ -402,7 +402,7 @@ class Tacotron2(BaseTacotron):
 
     def train_log(
         self, batch: dict, outputs: dict, logger: "Logger", assets: dict, steps: int
-    ) -> None:  # pylint: disable=no-self-use
+    ) -> None:
         """Log training progress."""
         figures, audios = self._create_logs(batch, outputs, self.ap)
         logger.train_figures(steps, figures)

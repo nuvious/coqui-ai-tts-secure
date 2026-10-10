@@ -71,9 +71,6 @@ def amp_to_db(*, x: np.ndarray = None, gain: float = 1, base: int = 10, **kwargs
     """
     assert (x < 0).sum() == 0, " [!] Input values must be non-negative."
     return gain * _log(np.maximum(1e-8, x), base)
-
-
-# pylint: disable=no-self-use
 def db_to_amp(*, x: np.ndarray = None, gain: float = 1, base: int = 10, **kwargs) -> np.ndarray:
     """Convert decibels spectrogram to amplitude spectrogram.
 
@@ -279,6 +276,11 @@ def compute_f0(
     """
     assert pitch_fmax is not None, " [!] Set `pitch_fmax` before caling `compute_f0`."
     assert pitch_fmin is not None, " [!] Set `pitch_fmin` before caling `compute_f0`."
+
+    # librosa rejects an fmin whose period does not fit in the analysis frame.
+    min_feasible_fmin = sample_rate / (win_length - 1)
+    if pitch_fmin <= min_feasible_fmin:
+        pitch_fmin = np.nextafter(min_feasible_fmin, np.inf)
 
     f0, voiced_mask, _ = pyin(
         y=x.astype(np.double),

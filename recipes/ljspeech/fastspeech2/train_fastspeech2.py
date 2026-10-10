@@ -1,4 +1,6 @@
 import os
+import subprocess
+import sys
 
 from trainer import Trainer, TrainerArgs
 
@@ -66,8 +68,24 @@ if not config.model_args.use_aligner:
     manager = ModelManager()
     model_path, config_path, _ = manager.download_model("tts_models/en/ljspeech/tacotron2-DCA")
     # TODO: make compute_attention python callable
-    os.system(
-        f"python TTS/bin/compute_attention_masks.py --model_path {model_path} --config_path {config_path} --dataset ljspeech --dataset_metafile metadata.csv --data_path ./recipes/ljspeech/LJSpeech-1.1/  --use_cuda true"
+    subprocess.run(
+        [
+            sys.executable,
+            "TTS/bin/compute_attention_masks.py",
+            "--model_path",
+            model_path,
+            "--config_path",
+            config_path,
+            "--dataset",
+            "ljspeech",
+            "--dataset_metafile",
+            "metadata.csv",
+            "--data_path",
+            "./recipes/ljspeech/LJSpeech-1.1/",
+            "--use_cuda",
+            "true",
+        ],
+        check=True,
     )
 
 # INITIALIZE THE AUDIO PROCESSOR

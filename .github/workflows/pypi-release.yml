@@ -1,16 +1,22 @@
-name: Publish Python 🐍 distributions 📦 to PyPI
+name: Publish Python distributions to PyPI
 on:
   release:
     types: [published]
+
+permissions:
+  contents: read
+
 defaults:
   run:
-    shell:
-      bash
+    shell: bash
+
 jobs:
   build-sdist:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Verify tag matches version
         run: |
           set -ex
@@ -19,76 +25,97 @@ jobs:
           if [[ "v$version" != "$tag" ]]; then
             exit 1
           fi
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: 3.9
+          python-version: "3.10"
       - run: |
           python -m pip install -U pip setuptools wheel build
       - run: |
           python -m build
       - run: |
           pip install dist/*.tar.gz
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sdist
           path: dist/*.tar.gz
   build-wheels:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install pip requirements
         run: |
           python -m pip install -U pip setuptools wheel build
-          python -m pip install -r requirements.txt
+          python -m pip install -r requirements.txt -c requirements/lock-py${{ matrix.python-version }}.txt
       - name: Setup and install manylinux1_x86_64 wheel
         run: |
           python setup.py bdist_wheel --plat-name=manylinux1_x86_64
           python -m pip install dist/*-manylinux*.whl
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: wheel-${{ matrix.python-version }}
           path: dist/*-manylinux*.whl
+  sbom:
+    runs-on: ubuntu-22.04
+    needs: [build-sdist]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+      - name: Write CycloneDX SBOM for the locked dependency set
+        run: |
+          python -m pip install pip-audit
+          pip-audit --no-deps --progress-spinner off -r requirements/lock-py3.11.txt --format cyclonedx-json --output sbom.cdx.json || true
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom
+          path: sbom.cdx.json
   publish-artifacts:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [build-sdist, build-wheels]
     steps:
       - run: |
           mkdir dist
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: "sdist"
           path: "dist/"
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: "wheel-3.9"
+          name: "wheel-3.12"
           path: "dist/"
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: "wheel-3.13"
+          path: "dist/"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: "wheel-3.10"
           path: "dist/"
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: "wheel-3.11"
           path: "dist/"
       - run: |
           ls -lh dist/
-      - name: Setup PyPI config
-        run: |
-          cat << EOF > ~/.pypirc
-          [pypi]
-          username=__token__
-          password=${{ secrets.PYPI_TOKEN }}
-          EOF
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: 3.9
+          python-version: "3.10"
       - run: |
           python -m pip install twine
-      - run: |
+      - name: Upload to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: |
           twine upload --repository pypi dist/*

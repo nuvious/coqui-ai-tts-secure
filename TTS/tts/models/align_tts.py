@@ -362,7 +362,7 @@ class AlignTTS(BaseTTS):
 
         return outputs, loss_dict
 
-    def _create_logs(self, batch, outputs, ap):  # pylint: disable=no-self-use
+    def _create_logs(self, batch, outputs, ap):
         model_outputs = outputs["model_outputs"]
         alignments = outputs["alignments"]
         mel_input = batch["mel_input"]
@@ -383,7 +383,7 @@ class AlignTTS(BaseTTS):
 
     def train_log(
         self, batch: dict, outputs: dict, logger: "Logger", assets: dict, steps: int
-    ) -> None:  # pylint: disable=no-self-use
+    ) -> None:
         figures, audios = self._create_logs(batch, outputs, self.ap)
         logger.train_figures(steps, figures)
         logger.train_audios(steps, audios, self.ap.sample_rate)

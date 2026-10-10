@@ -1,10 +1,10 @@
 import os
 import re
-import xml.etree.ElementTree as ET
 from glob import glob
 from pathlib import Path
 from typing import List
 
+import defusedxml.ElementTree as ET
 import pandas as pd
 from tqdm import tqdm
 

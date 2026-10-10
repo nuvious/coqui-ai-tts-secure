@@ -6,6 +6,7 @@ from trainer import Trainer, TrainerArgs
 from TTS.config import load_config, register_config
 from TTS.tts.datasets import load_tts_samples
 from TTS.tts.models import setup_model
+from TTS.utils.io import register_safe_globals
 
 
 @dataclass
@@ -54,7 +55,7 @@ def main():
     # init the model from config
     model = setup_model(config, train_samples + eval_samples)
 
-    # init the trainer and 🚀
+    register_safe_globals()
     trainer = Trainer(
         train_args,
         model.config,

@@ -31,7 +31,7 @@ def get_cuda():
 
 def get_git_branch():
     try:
-        out = subprocess.check_output(["git", "branch"]).decode("utf8")
+        out = subprocess.check_output(["git", "branch"]).decode("utf8")  # noqa: S607
         current = next(line for line in out.split("\n") if line.startswith("*"))
         current.replace("* ", "")
     except subprocess.CalledProcessError:
@@ -50,7 +50,7 @@ def get_commit_hash():
     #     raise RuntimeError(
     #         " !! Commit before training to get the commit hash.")
     try:
-        commit = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).decode().strip()
+        commit = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).decode().strip()  # noqa: S607
     # Not copying .git folder into docker container
     except (subprocess.CalledProcessError, FileNotFoundError):
         commit = "0000000"

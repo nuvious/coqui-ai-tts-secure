@@ -20,15 +20,21 @@ def is_tool(name):
 espeak_version_pattern = re.compile(r"text-to-speech:\s(?P<version>\d+\.\d+(\.\d+)?)")
 
 
+def _run_version_command(args):
+    """Run a fixed version command and return its combined output, as subprocess.getoutput did."""
+    result = subprocess.run(args, capture_output=True, text=True, check=False)  # noqa: S603  constant command
+    return result.stdout + result.stderr
+
+
 def get_espeak_version():
-    output = subprocess.getoutput("espeak --version")
+    output = _run_version_command(["espeak", "--version"])
     match = espeak_version_pattern.search(output)
 
     return match.group("version")
 
 
 def get_espeakng_version():
-    output = subprocess.getoutput("espeak-ng --version")
+    output = _run_version_command(["espeak-ng", "--version"])
     return output.split()[3]
 
 
@@ -55,7 +61,7 @@ def _espeak_exe(espeak_lib: str, args: List, sync=False) -> List[str]:
     cmd.extend(args)
     logging.debug("espeakng: executing %s", repr(cmd))
 
-    with subprocess.Popen(
+    with subprocess.Popen(  # noqa: S603  the executable is fixed and the text is passed as a single argument
         cmd,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,

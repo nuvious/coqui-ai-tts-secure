@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import re
@@ -5,14 +6,18 @@ import tarfile
 import zipfile
 from pathlib import Path
 from shutil import copyfile, rmtree
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import fsspec
 import requests
 from tqdm import tqdm
 
 from TTS.config import load_config, read_json_with_comments
+from TTS.utils.download import safe_extract_archive
 from TTS.utils.generic_utils import get_user_data_dir
+
+REQUEST_TIMEOUT = (10, 300)
+MODEL_FILE_NAMES = ("model_file.pth", "model_file.pth.tar", "model.pth")
 
 LICENSE_URLS = {
     "cc by-nc-nd 4.0": "https://creativecommons.org/licenses/by-nc-nd/4.0/",
@@ -112,8 +117,8 @@ class ModelManager(object):
             if model_query_idx <= 0:
                 print("> model_query_idx should be a positive integer!")
                 return
-        except:
-            print("> model_query_idx should be an integer!")
+        except Exception as e:
+            print(f"> model_query_idx should be an integer! ({e})")
             return
         model_count = 0
         if model_type in self.models_dict:
@@ -350,7 +355,52 @@ class ModelManager(object):
             print(f" > Failed to download the model file to {output_path}")
             rmtree(output_path)
             raise e
+        self._verify_model_hash(model_item, output_path)
         self.print_model_license(model_item=model_item)
+
+    @staticmethod
+    def _find_model_file(output_path: str) -> Optional[str]:
+        """Return the main checkpoint file in `output_path`, or None when the model has no single checkpoint."""
+        for file_name in os.listdir(output_path):
+            if file_name in MODEL_FILE_NAMES:
+                return os.path.join(output_path, file_name)
+        return None
+
+    @staticmethod
+    def _hash_file(file_path: str, expected_hash: str) -> str:
+        """Hash a file with md5 or sha256 depending on the length of the expected digest."""
+        if len(expected_hash) == 64:
+            hash_func = hashlib.sha256()
+        elif len(expected_hash) == 32:
+            hash_func = hashlib.md5(usedforsecurity=False)
+        else:
+            raise RuntimeError(f" [!] Unsupported model_hash length {len(expected_hash)} for {file_path}")
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(1024 * 1024), b""):
+                hash_func.update(chunk)
+        return hash_func.hexdigest()
+
+    def _verify_model_hash(self, model_item: Dict, output_path: str) -> None:
+        """Compare the downloaded checkpoint against `model_hash` and remove the folder on mismatch."""
+        expected_hash = model_item.get("model_hash")
+        if not expected_hash:
+            print(" > No model_hash available for this model, skipping integrity check.")
+            return
+        model_file = self._find_model_file(output_path)
+        if model_file is None:
+            rmtree(output_path)
+            raise RuntimeError(f" [!] model_hash is set but no checkpoint file was found in {output_path}")
+        actual_hash = self._hash_file(model_file, expected_hash.strip().lower())
+        if actual_hash != expected_hash.strip().lower():
+            rmtree(output_path)
+            raise RuntimeError(
+                f" [!] Hash mismatch for {model_file}: expected {expected_hash}, got {actual_hash}. "
+                "The download has been removed."
+            )
+        # The stale-cache check reads hash.md5, so recording the verified digest keeps it in step with .models.json.
+        with open(os.path.join(output_path, "hash.md5"), "w", encoding="utf-8") as f:
+            f.write(actual_hash)
+        print(f" > Verified {os.path.basename(model_file)} against model_hash.")
 
     def check_if_configs_are_equal(self, model_name, model_item, output_path):
         with fsspec.open(self._find_files(output_path)[1], "r", encoding="utf-8") as f:
@@ -403,8 +453,8 @@ class ModelManager(object):
             if "xtts" in model_name:
                 try:
                     self.check_if_configs_are_equal(model_name, model_item, output_path)
-                except:
-                    pass
+                except Exception as e:
+                    print(f" > Could not compare the local and remote config for {model_name}: {e}")
             else:
                 print(f" > {model_name} is already downloaded.")
         else:
@@ -525,60 +575,54 @@ class ModelManager(object):
             config.save_json(config_path)
 
     @staticmethod
+    def _stream_to_file(file_url, target_path, progress_bar):
+        """Download `file_url` into `target_path`, failing on HTTP errors before anything is written."""
+        r = requests.get(file_url, stream=True, timeout=REQUEST_TIMEOUT)
+        r.raise_for_status()
+        total_size_in_bytes = int(r.headers.get("content-length", 0))
+        block_size = 1024  # 1 Kibibyte
+        if progress_bar:
+            ModelManager.tqdm_progress = tqdm(total=total_size_in_bytes, unit="iB", unit_scale=True)
+        with open(target_path, "wb") as file:
+            for data in r.iter_content(block_size):
+                if progress_bar:
+                    ModelManager.tqdm_progress.update(len(data))
+                file.write(data)
+
+    @staticmethod
     def _download_zip_file(file_url, output_folder, progress_bar):
         """Download the github releases"""
-        # download the file
-        r = requests.get(file_url, stream=True)
-        # extract the file
+        temp_zip_name = os.path.join(output_folder, file_url.split("/")[-1])
         try:
-            total_size_in_bytes = int(r.headers.get("content-length", 0))
-            block_size = 1024  # 1 Kibibyte
-            if progress_bar:
-                ModelManager.tqdm_progress = tqdm(total=total_size_in_bytes, unit="iB", unit_scale=True)
-            temp_zip_name = os.path.join(output_folder, file_url.split("/")[-1])
-            with open(temp_zip_name, "wb") as file:
-                for data in r.iter_content(block_size):
-                    if progress_bar:
-                        ModelManager.tqdm_progress.update(len(data))
-                    file.write(data)
-            with zipfile.ZipFile(temp_zip_name) as z:
-                z.extractall(output_folder)
+            ModelManager._stream_to_file(file_url, temp_zip_name, progress_bar)
+            if not zipfile.is_zipfile(temp_zip_name):
+                raise zipfile.BadZipFile(f"{temp_zip_name} is not a zip file")
+            zip_names = safe_extract_archive(temp_zip_name, output_folder)
             os.remove(temp_zip_name)  # delete zip after extract
         except zipfile.BadZipFile:
             print(f" > Error: Bad zip file - {file_url}")
             raise zipfile.BadZipFile  # pylint: disable=raise-missing-from
         # move the files to the outer path
-        for file_path in z.namelist():
+        for file_path in zip_names:
             src_path = os.path.join(output_folder, file_path)
             if os.path.isfile(src_path):
                 dst_path = os.path.join(output_folder, os.path.basename(file_path))
                 if src_path != dst_path:
                     copyfile(src_path, dst_path)
         # remove redundant (hidden or not) folders
-        for file_path in z.namelist():
+        for file_path in zip_names:
             if os.path.isdir(os.path.join(output_folder, file_path)):
                 rmtree(os.path.join(output_folder, file_path))
 
     @staticmethod
     def _download_tar_file(file_url, output_folder, progress_bar):
         """Download the github releases"""
-        # download the file
-        r = requests.get(file_url, stream=True)
-        # extract the file
+        temp_tar_name = os.path.join(output_folder, file_url.split("/")[-1])
         try:
-            total_size_in_bytes = int(r.headers.get("content-length", 0))
-            block_size = 1024  # 1 Kibibyte
-            if progress_bar:
-                ModelManager.tqdm_progress = tqdm(total=total_size_in_bytes, unit="iB", unit_scale=True)
-            temp_tar_name = os.path.join(output_folder, file_url.split("/")[-1])
-            with open(temp_tar_name, "wb") as file:
-                for data in r.iter_content(block_size):
-                    if progress_bar:
-                        ModelManager.tqdm_progress.update(len(data))
-                    file.write(data)
-            with tarfile.open(temp_tar_name) as t:
-                t.extractall(output_folder)
-                tar_names = t.getnames()
+            ModelManager._stream_to_file(file_url, temp_tar_name, progress_bar)
+            if not tarfile.is_tarfile(temp_tar_name):
+                raise tarfile.ReadError(f"{temp_tar_name} is not a tar file")
+            tar_names = safe_extract_archive(temp_tar_name, output_folder)
             os.remove(temp_tar_name)  # delete tar after extract
         except tarfile.ReadError:
             print(f" > Error: Bad tar file - {file_url}")
@@ -596,20 +640,9 @@ class ModelManager(object):
     def _download_model_files(file_urls, output_folder, progress_bar):
         """Download the github releases"""
         for file_url in file_urls:
-            # download the file
-            r = requests.get(file_url, stream=True)
-            # extract the file
             bease_filename = file_url.split("/")[-1]
             temp_zip_name = os.path.join(output_folder, bease_filename)
-            total_size_in_bytes = int(r.headers.get("content-length", 0))
-            block_size = 1024  # 1 Kibibyte
-            with open(temp_zip_name, "wb") as file:
-                if progress_bar:
-                    ModelManager.tqdm_progress = tqdm(total=total_size_in_bytes, unit="iB", unit_scale=True)
-                for data in r.iter_content(block_size):
-                    if progress_bar:
-                        ModelManager.tqdm_progress.update(len(data))
-                    file.write(data)
+            ModelManager._stream_to_file(file_url, temp_zip_name, progress_bar)
 
     @staticmethod
     def _check_dict_key(my_dict, key):

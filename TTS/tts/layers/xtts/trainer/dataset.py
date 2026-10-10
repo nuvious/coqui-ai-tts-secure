@@ -82,7 +82,7 @@ class XTTSDataset(torch.utils.data.Dataset):
         for sample in self.samples:
             try:
                 tseq, _, wav, _, _, _ = self.load_item(sample)
-            except:
+            except Exception:  # noqa: S112  unreadable samples are skipped on purpose
                 continue
             # Basically, this audio file is nonexistent or too long to be supported by the dataset.
             if (
@@ -187,9 +187,9 @@ class XTTSDataset(torch.utils.data.Dataset):
             "wav_lengths": torch.tensor(wav.shape[-1], dtype=torch.long),
             "filenames": audiopath,
             "conditioning": cond.unsqueeze(1),
-            "cond_lens": torch.tensor(cond_len, dtype=torch.long)
-            if cond_len is not torch.nan
-            else torch.tensor([cond_len]),
+            "cond_lens": (
+                torch.tensor(cond_len, dtype=torch.long) if cond_len is not torch.nan else torch.tensor([cond_len])
+            ),
             "cond_idxs": torch.tensor(cond_idxs) if cond_idxs is not torch.nan else torch.tensor([cond_idxs]),
         }
         return res

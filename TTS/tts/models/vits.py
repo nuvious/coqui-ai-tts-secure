@@ -33,6 +33,7 @@ from TTS.tts.utils.synthesis import synthesis
 from TTS.tts.utils.text.characters import BaseCharacters, BaseVocabulary, _characters, _pad, _phonemes, _punctuations
 from TTS.tts.utils.text.tokenizer import TTSTokenizer
 from TTS.tts.utils.visual import plot_alignment
+from TTS.utils.audio.torch_io import load_audio_tensor
 from TTS.utils.io import load_fsspec
 from TTS.utils.samplers import BucketBatchSampler
 from TTS.vocoder.models.hifigan_generator import HifiganGenerator
@@ -70,7 +71,7 @@ def load_audio(file_path):
     Return Shapes:
         - x: :math:`[1, T]`
     """
-    x, sr = torchaudio.load(file_path)
+    x, sr = load_audio_tensor(file_path)
     assert (x > 1).sum() + (x < -1).sum() == 0
     return x, sr
 
@@ -1330,7 +1331,7 @@ class Vits(BaseTTS):
 
         raise ValueError(" [!] Unexpected `optimizer_idx`.")
 
-    def _log(self, ap, batch, outputs, name_prefix="train"):  # pylint: disable=unused-argument,no-self-use
+    def _log(self, ap, batch, outputs, name_prefix="train"):  # pylint: disable=unused-argument
         y_hat = outputs[1]["model_outputs"]
         y = outputs[1]["waveform_seg"]
         figures = plot_results(y_hat, y, ap, name_prefix)
@@ -1347,9 +1348,7 @@ class Vits(BaseTTS):
         )
         return figures, audios
 
-    def train_log(
-        self, batch: dict, outputs: dict, logger: "Logger", assets: dict, steps: int
-    ):  # pylint: disable=no-self-use
+    def train_log(self, batch: dict, outputs: dict, logger: "Logger", assets: dict, steps: int):
         """Create visualizations and waveform examples.
 
         For example, here you can plot spectrograms and generate sample sample waveforms from these spectrograms to
@@ -1887,9 +1886,11 @@ class Vits(BaseTTS):
         import onnxruntime as ort
 
         providers = [
-            "CPUExecutionProvider"
-            if cuda is False
-            else ("CUDAExecutionProvider", {"cudnn_conv_algo_search": "DEFAULT"})
+            (
+                "CPUExecutionProvider"
+                if cuda is False
+                else ("CUDAExecutionProvider", {"cudnn_conv_algo_search": "DEFAULT"})
+            )
         ]
         sess_options = ort.SessionOptions()
         self.onnx_sess = ort.InferenceSession(

@@ -160,3 +160,14 @@ If you are new to Github or open-source contribution, These are good resources.
 
 - [Github Docs](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/proposing-changes-to-your-work-with-pull-requests)
 - [First-Contribution](https://github.com/firstcontributions/first-contributions)
+
+## Keeping dependencies and security checks current
+
+This fork is maintained for security only. The usual loop is:
+
+1. `make lock` regenerates `requirements/lock-py*.txt` from `requirements*.txt`.
+2. `make audit` runs `pip-audit` on each lock file; `make sast` runs Bandit, Ruff security rules and Semgrep on `TTS/`.
+3. `make test_text test_aux data_tests inference_tests` are the fast offline suites; the training suites run in CI.
+4. `make api-check` compares the public API with `dev` using griffe, and `tests/aux_tests/test_api_surface.py` keeps a snapshot of the public surface. Regenerate the snapshot only when a change is intentional: `python -m tests.aux_tests.test_api_surface --update`.
+
+Install the scanners with `make security-deps`. See `SECURITY.md` for the hardening decisions and accepted risks.

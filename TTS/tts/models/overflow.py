@@ -117,7 +117,7 @@ class Overflow(BaseTTS):
 
     def preprocess_batch(self, text, text_len, mels, mel_len):
         if self.mean.item() == 0 or self.std.item() == 1:
-            statistics_dict = torch.load(self.mel_statistics_parameter_path)
+            statistics_dict = load_fsspec(self.mel_statistics_parameter_path)
             self.update_mean_std(statistics_dict)
 
         mels = self.normalize(mels)
@@ -296,13 +296,13 @@ class Overflow(BaseTTS):
                 "std": data_std.item(),
                 "init_transition_prob": init_transition_prob.item(),
             }
-            torch.save(statistics, trainer.config.mel_statistics_parameter_path)
+            torch.save(statistics, trainer.config.mel_statistics_parameter_path)  # nosemgrep  (dict of floats)
 
         else:
             print(
                 f" | > Data parameters found for: {trainer.config.mel_statistics_parameter_path}. Loading mel normalization parameters..."
             )
-            statistics = torch.load(trainer.config.mel_statistics_parameter_path)
+            statistics = load_fsspec(trainer.config.mel_statistics_parameter_path)
             data_mean, data_std, init_transition_prob = (
                 statistics["mean"],
                 statistics["std"],
@@ -317,7 +317,7 @@ class Overflow(BaseTTS):
         trainer.model.update_mean_std(statistics)
 
     @torch.inference_mode()
-    def _create_logs(self, batch, outputs, ap):  # pylint: disable=no-self-use, unused-argument
+    def _create_logs(self, batch, outputs, ap):  # pylint: disable=unused-argument
         alignments, transition_vectors = outputs["alignments"], outputs["transition_vectors"]
         means = torch.stack(outputs["means"], dim=1)
 
@@ -386,7 +386,7 @@ class Overflow(BaseTTS):
 class NLLLoss(nn.Module):
     """Negative log likelihood loss."""
 
-    def forward(self, log_prob: torch.Tensor) -> dict:  # pylint: disable=no-self-use
+    def forward(self, log_prob: torch.Tensor) -> dict:
         """Compute the loss.
 
         Args:

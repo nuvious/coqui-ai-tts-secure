@@ -91,7 +91,7 @@ class UpsampleNetwork(nn.Module):
         use_aux_net,
     ):
         super().__init__()
-        self.total_scale = np.cumproduct(upsample_scales)[-1]
+        self.total_scale = np.cumprod(upsample_scales)[-1]
         self.indent = pad * self.total_scale
         self.use_aux_net = use_aux_net
         if use_aux_net:
@@ -239,7 +239,7 @@ class Wavernn(BaseVocoder):
 
         if self.args.use_upsample_net:
             assert (
-                np.cumproduct(self.args.upsample_factors)[-1] == config.audio.hop_length
+                np.cumprod(self.args.upsample_factors)[-1] == config.audio.hop_length
             ), " [!] upsample scales needs to be equal to hop_length"
             self.upsample = UpsampleNetwork(
                 self.args.feat_dims,
@@ -604,7 +604,7 @@ class Wavernn(BaseVocoder):
         waveform_coarse = batch[2]
         return {"input": mels, "waveform": waveform, "waveform_coarse": waveform_coarse}
 
-    def get_data_loader(  # pylint: disable=no-self-use
+    def get_data_loader(
         self,
         config: Coqpit,
         assets: Dict,

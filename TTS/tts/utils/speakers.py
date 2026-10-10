@@ -187,7 +187,7 @@ def get_speaker_manager(c: Coqpit, data: List = None, restore_path: str = None, 
             # new speaker manager with external speaker embeddings.
             speaker_manager.load_embeddings_from_file(c.d_vector_file)
         elif c.use_d_vector_file and not c.d_vector_file:
-            raise "use_d_vector_file is True, so you need pass a external speaker embedding file."
+            raise ValueError("use_d_vector_file is True, so you need pass a external speaker embedding file.")
         elif c.use_speaker_embedding and "speakers_file" in c and c.speakers_file:
             # new speaker manager with speaker IDs file.
             speaker_manager.load_ids_from_file(c.speakers_file)

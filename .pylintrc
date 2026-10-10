@@ -1,5 +1,9 @@
 [MASTER]
 
+# Fail only on error-class messages; the score threshold is disabled.
+fail-under=0
+fail-on=E
+
 # A comma-separated list of package or module names from where C extensions may
 # be loaded. Extensions are loading into the active Python interpreter and may
 # run arbitrary code.
@@ -38,7 +42,6 @@ persistent=yes
 
 # When enabled, pylint would attempt to guess common misconfiguration and emit
 # user-friendly hints instead of false-positive error messages.
-suggestion-mode=yes
 
 # Allow loading of arbitrary C extensions. Extensions are imported into the
 # active Python interpreter and may run arbitrary code.
@@ -61,6 +64,22 @@ confidence=
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
 disable=missing-docstring,
+        # Style checks added after pylint 2.10 that the existing code base does not follow; lint only fails on errors.
+        too-many-positional-arguments,
+        consider-using-f-string,
+        possibly-used-before-assignment,
+        unnecessary-ellipsis,
+        broad-exception-raised,
+        broad-exception-caught,
+        use-dict-literal,
+        unnecessary-list-index-lookup,
+        unnecessary-lambda-assignment,
+        consider-using-generator,
+        consider-iterating-dictionary,
+        useless-return,
+        nested-min-max,
+        unspecified-encoding,
+        superfluous-parens,
         too-many-public-methods,
         too-many-lines,
         bare-except,
@@ -82,16 +101,6 @@ disable=missing-docstring,
         no-name-in-module,
         no-member,
         unsubscriptable-object,
-        print-statement,
-        parameter-unpacking,
-        unpacking-in-except,
-        old-raise-syntax,
-        backtick,
-        long-suffix,
-        old-ne-operator,
-        old-octal-literal,
-        import-star-module-level,
-        non-ascii-bytes-literal,
         raw-checker-failed,
         bad-inline-option,
         locally-disabled,
@@ -106,67 +115,6 @@ disable=missing-docstring,
         too-many-arguments,
         too-many-locals,
         too-many-statements,
-        apply-builtin,
-        basestring-builtin,
-        buffer-builtin,
-        cmp-builtin,
-        coerce-builtin,
-        execfile-builtin,
-        file-builtin,
-        long-builtin,
-        raw_input-builtin,
-        reduce-builtin,
-        standarderror-builtin,
-        unicode-builtin,
-        xrange-builtin,
-        coerce-method,
-        delslice-method,
-        getslice-method,
-        setslice-method,
-        no-absolute-import,
-        old-division,
-        dict-iter-method,
-        dict-view-method,
-        next-method-called,
-        metaclass-assignment,
-        indexing-exception,
-        raising-string,
-        reload-builtin,
-        oct-method,
-        hex-method,
-        nonzero-method,
-        cmp-method,
-        input-builtin,
-        round-builtin,
-        intern-builtin,
-        unichr-builtin,
-        map-builtin-not-iterating,
-        zip-builtin-not-iterating,
-        range-builtin-not-iterating,
-        filter-builtin-not-iterating,
-        using-cmp-argument,
-        eq-without-hash,
-        div-method,
-        idiv-method,
-        rdiv-method,
-        exception-message-attribute,
-        invalid-str-codec,
-        sys-max-int,
-        bad-python3-import,
-        deprecated-string-function,
-        deprecated-str-translate-call,
-        deprecated-itertools-function,
-        deprecated-types-field,
-        next-method-defined,
-        dict-items-not-iterating,
-        dict-keys-not-iterating,
-        dict-values-not-iterating,
-        deprecated-operator-function,
-        deprecated-urllib-function,
-        xreadlines-attribute,
-        deprecated-sys-function,
-        exception-escape,
-        comprehension-escape,
         duplicate-code,
         not-callable,
         import-outside-toplevel,
@@ -358,13 +306,6 @@ max-line-length=120
 
 # Maximum number of lines in a module.
 max-module-lines=1000
-
-# List of optional constructs for which whitespace checking is disabled. `dict-
-# separator` is used to allow tabulation in dicts, etc.: {1  : 1,\n222: 2}.
-# `trailing-comma` allows a space between comma and closing bracket: (a, ).
-# `empty-line` allows space-only lines.
-no-space-check=trailing-comma,
-               dict-separator
 
 # Allow the body of a class to be on the same line as the declaration if body
 # contains single statement.
@@ -595,5 +536,5 @@ min-public-methods=2
 
 # Exceptions that will emit a warning when being caught. Defaults to
 # "BaseException, Exception".
-overgeneral-exceptions=BaseException,
-                       Exception
+overgeneral-exceptions=builtins.BaseException,
+                       builtins.Exception

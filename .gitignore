@@ -170,3 +170,8 @@ depot/*
 coqui_recipes/*
 local_scripts/*
 coqui_demos/*
+# Security scanner reports
+sbom.cdx.json
+bandit.json
+bandit.sarif
+trivy.sarif

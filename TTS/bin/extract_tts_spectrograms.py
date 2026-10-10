@@ -198,7 +198,7 @@ def extract_spectrograms(
 
             # quantize and save wav
             if quantize_bits > 0:
-                wavq = quantize(wav, quantize_bits)
+                wavq = quantize(x=wav, quantize_bits=quantize_bits)
                 np.save(wavq_path, wavq)
 
             # save TTS mel

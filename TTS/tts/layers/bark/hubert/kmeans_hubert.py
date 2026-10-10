@@ -49,7 +49,9 @@ class CustomHubert(nn.Module):
         self.output_layer = output_layer
         if device is not None:
             self.to(device)
-        self.model = HubertModel.from_pretrained("facebook/hubert-base-ls960")
+        self.model = HubertModel.from_pretrained(
+            "facebook/hubert-base-ls960", revision="dba3bb02fda4248b6e082697eee756de8fe8aa8a"
+        )
         if device is not None:
             self.model.to(device)
         self.model.eval()

@@ -428,7 +428,7 @@ class MonotonicDynamicConvolutionAttention(nn.Module):
         context = torch.bmm(attention_weights.unsqueeze(1), inputs).squeeze(1)
         return context
 
-    def preprocess_inputs(self, inputs):  # pylint: disable=no-self-use
+    def preprocess_inputs(self, inputs):
         return None
 
     def init_states(self, inputs):

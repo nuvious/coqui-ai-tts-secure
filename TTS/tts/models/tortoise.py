@@ -22,6 +22,7 @@ from TTS.tts.layers.tortoise.tokenizer import VoiceBpeTokenizer
 from TTS.tts.layers.tortoise.vocoder import VocConf, VocType
 from TTS.tts.layers.tortoise.wav2vec_alignment import Wav2VecAlignment
 from TTS.tts.models.base_tts import BaseTTS
+from TTS.utils.io import load_fsspec
 
 
 def pad_or_truncate(t, length):
@@ -167,7 +168,7 @@ def classify_audio_clip(clip, model_dir):
         kernel_size=5,
         distribute_zero_label=False,
     )
-    classifier.load_state_dict(torch.load(os.path.join(model_dir, "classifier.pth"), map_location=torch.device("cpu")))
+    classifier.load_state_dict(load_fsspec(os.path.join(model_dir, "classifier.pth"), map_location=torch.device("cpu")))
     clip = clip.cpu().unsqueeze(0)
     results = F.softmax(classifier(clip), dim=-1)
     return results[0][0]
@@ -482,14 +483,14 @@ class Tortoise(BaseTTS):
         if self.rlg_auto is None:
             self.rlg_auto = RandomLatentConverter(1024).eval()
             self.rlg_auto.load_state_dict(
-                torch.load(
+                load_fsspec(
                     os.path.join(self.models_dir, "rlg_auto.pth"),
                     map_location=torch.device("cpu"),
                 )
             )
             self.rlg_diffusion = RandomLatentConverter(2048).eval()
             self.rlg_diffusion.load_state_dict(
-                torch.load(
+                load_fsspec(
                     os.path.join(self.models_dir, "rlg_diffuser.pth"),
                     map_location=torch.device("cpu"),
                 )
@@ -878,22 +879,22 @@ class Tortoise(BaseTTS):
 
         if os.path.exists(ar_path):
             # remove keys from the checkpoint that are not in the model
-            checkpoint = torch.load(ar_path, map_location=torch.device("cpu"))
+            checkpoint = load_fsspec(ar_path, map_location=torch.device("cpu"))
 
             # strict set False
             # due to removed `bias` and `masked_bias` changes in Transformers
             self.autoregressive.load_state_dict(checkpoint, strict=False)
 
         if os.path.exists(diff_path):
-            self.diffusion.load_state_dict(torch.load(diff_path), strict=strict)
+            self.diffusion.load_state_dict(load_fsspec(diff_path), strict=strict)
 
         if os.path.exists(clvp_path):
-            self.clvp.load_state_dict(torch.load(clvp_path), strict=strict)
+            self.clvp.load_state_dict(load_fsspec(clvp_path), strict=strict)
 
         if os.path.exists(vocoder_checkpoint_path):
             self.vocoder.load_state_dict(
                 config.model_args.vocoder.value.optionally_index(
-                    torch.load(
+                    load_fsspec(
                         vocoder_checkpoint_path,
                         map_location=torch.device("cpu"),
                     )

@@ -7,6 +7,7 @@
 # https://github.com/pytorch/fairseq
 # --------------------------------------------------------
 
+import ast
 import logging
 import math
 from typing import List, Optional, Tuple
@@ -123,7 +124,7 @@ def compute_mask_indices(
             for length in sorted(lengths, reverse=True):
                 lens = np.fromiter(
                     (e - s if e - s >= length + min_space else 0 for s, e in parts),
-                    np.int,
+                    int,
                 )
                 l_sum = np.sum(lens)
                 if l_sum == 0:
@@ -153,9 +154,29 @@ def compute_mask_indices(
     return mask
 
 
+def _parse_conv_feature_layers(spec: str) -> List[Tuple[int, ...]]:
+    """Evaluate a layer spec such as "[(512,10,5)] + [(512,3,2)] * 4" without executing arbitrary code."""
+
+    def _eval(node):
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+            return node.value
+        if isinstance(node, ast.Tuple):
+            return tuple(_eval(elt) for elt in node.elts)
+        if isinstance(node, ast.List):
+            return [_eval(elt) for elt in node.elts]
+        if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Mult)):
+            left, right = _eval(node.left), _eval(node.right)
+            return left + right if isinstance(node.op, ast.Add) else left * right
+        raise ValueError(f"Unsupported expression in conv_feature_layers: {ast.dump(node)}")
+
+    return _eval(ast.parse(spec, mode="eval").body)
+
+
 class WavLMConfig:
     def __init__(self, cfg=None):
-        self.extractor_mode: str = "default"  # mode for feature extractor. default has a single group norm with d groups in the first conv block, whereas layer_norm has layer norms in every block (meant to use with normalize=True)
+        self.extractor_mode: str = (
+            "default"  # mode for feature extractor. default has a single group norm with d groups in the first conv block, whereas layer_norm has layer norms in every block (meant to use with normalize=True)
+        )
         self.encoder_layers: int = 12  # num encoder layers in the transformer
 
         self.encoder_embed_dim: int = 768  # encoder embedding dimension
@@ -164,7 +185,9 @@ class WavLMConfig:
         self.activation_fn: str = "gelu"  # activation function to use
 
         self.layer_norm_first: bool = False  # apply layernorm first in the transformer
-        self.conv_feature_layers: str = "[(512,10,5)] + [(512,3,2)] * 4 + [(512,2,2)] * 2"  # string describing convolutional feature extraction layers in form of a python list that contains [(dim, kernel_size, stride), ...]
+        self.conv_feature_layers: str = (
+            "[(512,10,5)] + [(512,3,2)] * 4 + [(512,2,2)] * 2"  # string describing convolutional feature extraction layers in form of a python list that contains [(dim, kernel_size, stride), ...]
+        )
         self.conv_bias: bool = False  # include bias in conv encoder
         self.feature_grad_mult: float = 1.0  # multiply feature extractor var grads by this
 
@@ -224,7 +247,7 @@ class WavLM(nn.Module):
         logger.info(f"WavLM Config: {cfg.__dict__}")
 
         self.cfg = cfg
-        feature_enc_layers = eval(cfg.conv_feature_layers)
+        feature_enc_layers = _parse_conv_feature_layers(cfg.conv_feature_layers)
         self.embed = feature_enc_layers[-1][0]
 
         self.feature_extractor = ConvFeatureExtractionModel(
@@ -416,7 +439,7 @@ class ConvFeatureExtractionModel(nn.Module):
             self.conv_layers = nn.ModuleList()
             for i, cl in enumerate(conv_layers):
                 assert len(cl) == 3, "invalid conv definition: " + str(cl)
-                (dim, k, stride) = cl
+                dim, k, stride = cl
 
                 self.conv_layers.append(
                     block(
@@ -435,7 +458,7 @@ class ConvFeatureExtractionModel(nn.Module):
             self.conv_layers = nn.ModuleList()
             for i, cl in enumerate(conv_layers):
                 assert len(cl) == 3
-                (dim, k, stride) = cl
+                dim, k, stride = cl
 
                 self.conv_layers.append(torch.nn.Conv2d(in_d, dim, k, stride))
                 self.conv_layers.append(torch.nn.ReLU())
@@ -446,7 +469,7 @@ class ConvFeatureExtractionModel(nn.Module):
             self.conv_layers = nn.ModuleList()
             for i, cl in enumerate(conv_layers):
                 assert len(cl) == 3
-                (dim, k, stride) = cl
+                dim, k, stride = cl
                 self.conv_layers.append(torch.nn.Conv2d(in_d, dim, k, stride, padding=1))
                 self.conv_layers.append(torch.nn.LayerNorm([dim, idim]))
                 self.conv_layers.append(torch.nn.ReLU())

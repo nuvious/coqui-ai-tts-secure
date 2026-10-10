@@ -25,6 +25,7 @@ from TTS.utils.audio.numpy_transforms import (
     trim_silence,
     volume_norm,
 )
+from TTS.utils.io import safe_np_load_dict
 
 # pylint: disable=too-many-public-methods
 
@@ -346,7 +347,7 @@ class AudioProcessor(object):
             Tuple[np.array, np.array, np.array, np.array, Dict]: loaded statistics and the config used to
                 compute them.
         """
-        stats = np.load(stats_path, allow_pickle=True).item()  # pylint: disable=unexpected-keyword-arg
+        stats = safe_np_load_dict(stats_path)
         mel_mean = stats["mel_mean"]
         mel_std = stats["mel_std"]
         linear_mean = stats["linear_mean"]

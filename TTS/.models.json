@@ -11,7 +11,7 @@
                         "https://coqui.gateway.scarf.sh/hf-coqui/XTTS-v2/main/hash.md5",
                         "https://coqui.gateway.scarf.sh/hf-coqui/XTTS-v2/main/speakers_xtts.pth"
                     ],
-                    "model_hash": "10f92b55c512af7a8d39d650547a15a7",
+                    "model_hash": "4736c072db0c929ca6be932680d0d406",
                     "default_vocoder": null,
                     "commit": "480a6cdf7",
                     "license": "CPML",

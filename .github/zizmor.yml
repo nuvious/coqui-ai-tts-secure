@@ -1,0 +1,6 @@
+rules:
+  cache-poisoning:
+    ignore:
+      # These workflows never publish runtime artifacts; the release/* branch trigger only runs tests.
+      - tests.yml
+      - lint.yml

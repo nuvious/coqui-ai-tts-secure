@@ -12,6 +12,8 @@ import numpy
 import torch
 from torch import nn, optim
 
+from TTS.utils.io import load_fsspec
+
 
 class HubertTokenizer(nn.Module):
     def __init__(self, hidden_size=1024, input_size=768, output_size=10000, version=0):
@@ -120,7 +122,7 @@ class HubertTokenizer(nn.Module):
                 data_from_model.output_size,
                 data_from_model.version,
             )
-        model.load_state_dict(torch.load(path, map_location=map_location))
+        model.load_state_dict(load_fsspec(path, map_location=map_location))
         if map_location:
             model = model.to(map_location)
         return model

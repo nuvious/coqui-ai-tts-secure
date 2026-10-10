@@ -8,6 +8,8 @@ import torch.nn.functional as F
 import torchaudio
 from einops import rearrange
 
+from TTS.utils.io import load_fsspec
+
 
 def default(val, d):
     return val if val is not None else d
@@ -43,7 +45,7 @@ def dvae_wav_to_mel(
     mel = mel_stft(wav)
     mel = torch.log(torch.clamp(mel, min=1e-5))
     if mel_norms is None:
-        mel_norms = torch.load(mel_norms_file, map_location=device)
+        mel_norms = load_fsspec(mel_norms_file, map_location=device)
     mel = mel / mel_norms.unsqueeze(0).unsqueeze(-1)
     return mel
 

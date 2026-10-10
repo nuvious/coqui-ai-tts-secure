@@ -10,6 +10,7 @@ import tqdm
 
 from TTS.tts.layers.bark.model import GPT, GPTConfig
 from TTS.tts.layers.bark.model_fine import FineGPT, FineGPTConfig
+from TTS.utils.io import load_fsspec
 
 if (
     torch.cuda.is_available()
@@ -38,7 +39,7 @@ if not hasattr(torch.nn.functional, "scaled_dot_product_attention"):
 
 
 def _md5(fname):
-    hash_md5 = hashlib.md5()
+    hash_md5 = hashlib.md5(usedforsecurity=False)
     with open(fname, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
             hash_md5.update(chunk)
@@ -47,7 +48,7 @@ def _md5(fname):
 
 def _download(from_s3_path, to_local_path, CACHE_DIR):
     os.makedirs(CACHE_DIR, exist_ok=True)
-    response = requests.get(from_s3_path, stream=True)
+    response = requests.get(from_s3_path, stream=True, timeout=(10, 300))
     total_size_in_bytes = int(response.headers.get("content-length", 0))
     block_size = 1024  # 1 Kibibyte
     progress_bar = tqdm.tqdm(total=total_size_in_bytes, unit="iB", unit_scale=True)
@@ -118,7 +119,7 @@ def load_model(ckpt_path, device, config, model_type="text"):
         logger.info(f"{model_type} model not found, downloading...")
         _download(config.REMOTE_MODEL_PATHS[model_type]["path"], ckpt_path, config.CACHE_DIR)
 
-    checkpoint = torch.load(ckpt_path, map_location=device)
+    checkpoint = load_fsspec(ckpt_path, map_location=device)
     # this is a hack
     model_args = checkpoint["model_args"]
     if "input_vocab_size" not in model_args:

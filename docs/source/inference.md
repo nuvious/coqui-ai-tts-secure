@@ -89,6 +89,8 @@ but gives you an easy way to interact with the models.
 
 The demo server provides pretty much the same interface as the CLI command.
 
+The server listens on 127.0.0.1 by default; pass `--host 0.0.0.0` (or set `TTS_SERVER_HOST`) to expose it to other machines. The Docker images already set `TTS_SERVER_HOST=0.0.0.0`.
+
 ```bash
 tts-server -h # see the help
 tts-server --list_models  # list the available models.

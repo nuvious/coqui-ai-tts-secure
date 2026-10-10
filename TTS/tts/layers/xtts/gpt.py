@@ -188,9 +188,9 @@ class GPT(nn.Module):
     def get_grad_norm_parameter_groups(self):
         return {
             "conditioning_encoder": list(self.conditioning_encoder.parameters()),
-            "conditioning_perceiver": list(self.conditioning_perceiver.parameters())
-            if self.use_perceiver_resampler
-            else None,
+            "conditioning_perceiver": (
+                list(self.conditioning_perceiver.parameters()) if self.use_perceiver_resampler else None
+            ),
             "gpt": list(self.gpt.parameters()),
             "heads": list(self.text_head.parameters()) + list(self.mel_head.parameters()),
         }
@@ -606,6 +606,5 @@ class GPT(nn.Module):
             pad_token_id=self.stop_audio_token,
             eos_token_id=self.stop_audio_token,
             max_length=self.max_gen_mel_tokens + fake_inputs.shape[-1],
-            do_stream=True,
             **hf_generate_kwargs,
         )

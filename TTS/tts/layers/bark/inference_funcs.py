@@ -7,7 +7,6 @@ from typing import Dict, List
 import librosa
 import numpy as np
 import torch
-import torchaudio
 import tqdm
 from encodec.utils import convert_audio
 from scipy.special import softmax
@@ -17,6 +16,7 @@ from TTS.tts.layers.bark.hubert.hubert_manager import HubertManager
 from TTS.tts.layers.bark.hubert.kmeans_hubert import CustomHubert
 from TTS.tts.layers.bark.hubert.tokenizer import HubertTokenizer
 from TTS.tts.layers.bark.load_model import clear_cuda_cache, inference_mode
+from TTS.utils.audio.torch_io import load_audio_tensor
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +116,7 @@ def generate_voice(
         output_path (str): The path to save the generated voice to.
     """
     if isinstance(audio, str):
-        audio, sr = torchaudio.load(audio)
+        audio, sr = load_audio_tensor(audio)
         audio = convert_audio(audio, sr, model.config.sample_rate, model.encodec.channels)
         audio = audio.unsqueeze(0).to(model.device)
 
@@ -188,6 +188,7 @@ def generate_text_semantic(
     text = _normalize_whitespace(text)
     assert len(text.strip()) > 0
     if all(v is not None for v in history_prompt) or base is not None:
+        semantic_history = None
         if history_prompt is not None:
             semantic_history = history_prompt[0]
         if base is not None:
@@ -511,6 +512,7 @@ def generate_fine(
         and x_coarse_gen.max() <= model.config.CODEBOOK_SIZE - 1
     )
     if all(v is not None for v in history_prompt) or base is not None:
+        x_fine_history = None
         if history_prompt is not None:
             x_fine_history = history_prompt[2]
         if base is not None:

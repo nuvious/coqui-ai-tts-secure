@@ -9,6 +9,7 @@ import torch
 from TTS.config import load_config
 from TTS.encoder.utils.generic_utils import setup_encoder_model
 from TTS.utils.audio import AudioProcessor
+from TTS.utils.io import load_fsspec
 
 
 def load_file(path: str):
@@ -16,8 +17,7 @@ def load_file(path: str):
         with fsspec.open(path, "r") as f:
             return json.load(f)
     elif path.endswith(".pth"):
-        with fsspec.open(path, "rb") as f:
-            return torch.load(f, map_location="cpu")
+        return load_fsspec(path, map_location="cpu", cache=False)
     else:
         raise ValueError("Unsupported file type")
 
@@ -28,7 +28,7 @@ def save_file(obj: Any, path: str):
             json.dump(obj, f, indent=4)
     elif path.endswith(".pth"):
         with fsspec.open(path, "wb") as f:
-            torch.save(obj, f)
+            torch.save(obj, f)  # nosemgrep  (saving plain dicts and tensors)
     else:
         raise ValueError("Unsupported file type")
 

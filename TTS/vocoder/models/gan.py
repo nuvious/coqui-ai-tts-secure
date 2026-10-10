@@ -313,7 +313,7 @@ class GAN(BaseVocoder):
         x, y = batch
         return {"input": x, "waveform": y}
 
-    def get_data_loader(  # pylint: disable=no-self-use, unused-argument
+    def get_data_loader(  # pylint: disable=unused-argument
         self,
         config: Coqpit,
         assets: Dict,

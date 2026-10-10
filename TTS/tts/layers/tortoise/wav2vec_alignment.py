@@ -47,9 +47,15 @@ class Wav2VecAlignment:
     """
 
     def __init__(self, device="cuda"):
-        self.model = Wav2Vec2ForCTC.from_pretrained("jbetker/wav2vec2-large-robust-ft-libritts-voxpopuli").cpu()
-        self.feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained("facebook/wav2vec2-large-960h")
-        self.tokenizer = Wav2Vec2CTCTokenizer.from_pretrained("jbetker/tacotron-symbols")
+        self.model = Wav2Vec2ForCTC.from_pretrained(
+            "jbetker/wav2vec2-large-robust-ft-libritts-voxpopuli", revision="33e5835aad1c32ac8707971141b65c3fc5ff1904"
+        ).cpu()
+        self.feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(
+            "facebook/wav2vec2-large-960h", revision="bdeaacdf88f7a155f50a2704bc967aa81fbbb2ab"
+        )
+        self.tokenizer = Wav2Vec2CTCTokenizer.from_pretrained(
+            "jbetker/tacotron-symbols", revision="fc50d5f17a478babea84d1c0ba2a4a2916c352c3"
+        )
         self.device = device
 
     def align(self, audio, expected_text, audio_sample_rate=24000):

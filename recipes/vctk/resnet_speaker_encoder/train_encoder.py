@@ -1,4 +1,6 @@
 import os
+import shlex
+import subprocess
 
 from TTS.encoder.configs.speaker_encoder_config import SpeakerEncoderConfig
 
@@ -136,4 +138,4 @@ if RESTORE_PATH is not None:
 else:
     command = f"python TTS/bin/train_encoder.py --config_path {CONFIG_OUT_PATH}"
 
-os.system(command)
+subprocess.run(shlex.split(command), check=True)

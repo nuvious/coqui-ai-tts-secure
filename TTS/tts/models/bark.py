@@ -31,7 +31,9 @@ class Bark(BaseTTS):
     def __init__(
         self,
         config: Coqpit,
-        tokenizer: BertTokenizer = BertTokenizer.from_pretrained("bert-base-multilingual-cased"),
+        tokenizer: BertTokenizer = BertTokenizer.from_pretrained(
+            "bert-base-multilingual-cased", revision="3f076fdb1ab68d5b2880cb87a0886f315b8146f8"
+        ),
     ) -> None:
         super().__init__(config=config, ap=None, tokenizer=None, speaker_manager=None, language_manager=None)
         self.config.num_chars = len(tokenizer)
@@ -225,14 +227,11 @@ class Bark(BaseTTS):
 
         return return_dict
 
-    def eval_step(self):
-        ...
+    def eval_step(self): ...
 
-    def forward(self):
-        ...
+    def forward(self): ...
 
-    def inference(self):
-        ...
+    def inference(self): ...
 
     @staticmethod
     def init_from_config(config: "BarkConfig", **kwargs):  # pylint: disable=unused-argument

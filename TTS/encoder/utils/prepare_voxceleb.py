@@ -17,17 +17,22 @@
 # Only support eager mode and TF>=2.0.0
 # pylint: disable=no-member, invalid-name, relative-beyond-top-level
 # pylint: disable=too-many-locals, too-many-statements, too-many-arguments, too-many-instance-attributes
-""" voxceleb 1 & 2 """
+"""voxceleb 1 & 2"""
 
 import hashlib
 import os
+import shlex
+import shutil
 import subprocess
 import sys
 import zipfile
+from glob import glob
 
 import pandas
 import soundfile as sf
 from absl import logging
+
+from TTS.utils.download import safe_extract_archive
 
 SUBSETS = {
     "vox1_dev_wav": [
@@ -57,7 +62,8 @@ MD5SUM = {
     "vox2_test_aac": "0d2b3ea430a821c33263b5ea37ede312",
 }
 
-USER = {"user": "", "password": ""}
+# VoxCeleb credentials come from the environment so they are never stored in the source tree.
+USER = {"user": os.environ.get("VOXCELEB_USER", ""), "password": os.environ.get("VOXCELEB_PASSWORD", "")}
 
 speaker_id_dict = {}
 
@@ -78,9 +84,8 @@ def download_and_extract(directory, subset, urls):
             if os.path.exists(zip_filepath):
                 continue
             logging.info("Downloading %s to %s" % (url, zip_filepath))
-            subprocess.call(
-                "wget %s --user %s --password %s -O %s" % (url, USER["user"], USER["password"], zip_filepath),
-                shell=True,
+            subprocess.call(  # noqa: S603  constant download URLs
+                ["wget", url, "--user", USER["user"], "--password", USER["password"], "-O", zip_filepath],  # noqa: S607
             )
 
             statinfo = os.stat(zip_filepath)
@@ -89,20 +94,26 @@ def download_and_extract(directory, subset, urls):
         # concatenate all parts into zip files
         if ".zip" not in zip_filepath:
             zip_filepath = "_".join(zip_filepath.split("_")[:-1])
-            subprocess.call("cat %s* > %s.zip" % (zip_filepath, zip_filepath), shell=True)
+            with open(zip_filepath + ".zip", "wb") as f_out:
+                for part in sorted(glob(zip_filepath + "*")):
+                    if part.endswith(".zip"):
+                        continue
+                    with open(part, "rb") as f_in:
+                        shutil.copyfileobj(f_in, f_out)
             zip_filepath += ".zip"
         extract_path = zip_filepath.strip(".zip")
 
         # check zip file md5sum
         with open(zip_filepath, "rb") as f_zip:
-            md5 = hashlib.md5(f_zip.read()).hexdigest()
+            md5 = hashlib.md5(f_zip.read(), usedforsecurity=False).hexdigest()
         if md5 != MD5SUM[subset]:
             raise ValueError("md5sum of %s mismatch" % zip_filepath)
 
         with zipfile.ZipFile(zip_filepath, "r") as zfile:
-            zfile.extractall(directory)
-            extract_path_ori = os.path.join(directory, zfile.infolist()[0].filename)
-            subprocess.call("mv %s %s" % (extract_path_ori, extract_path), shell=True)
+            first_member = zfile.infolist()[0].filename
+        safe_extract_archive(zip_filepath, directory)
+        extract_path_ori = os.path.join(directory, first_member)
+        shutil.move(extract_path_ori, extract_path)
     finally:
         # os.remove(zip_filepath)
         pass
@@ -116,7 +127,7 @@ def exec_cmd(cmd):
         int, the return code.
     """
     try:
-        retcode = subprocess.call(cmd, shell=True)
+        retcode = subprocess.call(shlex.split(cmd))  # noqa: S603  commands are built by this script
         if retcode < 0:
             logging.info(f"Child was terminated by signal {retcode}")
     except OSError as e:

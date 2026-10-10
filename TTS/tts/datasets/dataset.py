@@ -4,6 +4,7 @@ import os
 import random
 from typing import Dict, List, Union
 
+import mutagen
 import numpy as np
 import torch
 import tqdm
@@ -12,8 +13,7 @@ from torch.utils.data import Dataset
 from TTS.tts.utils.data import prepare_data, prepare_stop_target, prepare_tensor
 from TTS.utils.audio import AudioProcessor
 from TTS.utils.audio.numpy_transforms import compute_energy as calculate_energy
-
-import mutagen
+from TTS.utils.io import safe_np_load_dict
 
 # to prevent too many open files error as suggested here
 # https://github.com/pytorch/pytorch/issues/11201#issuecomment-421146936
@@ -775,7 +775,7 @@ class F0Dataset:
 
     def load_stats(self, cache_path):
         stats_path = os.path.join(cache_path, "pitch_stats.npy")
-        stats = np.load(stats_path, allow_pickle=True).item()
+        stats = safe_np_load_dict(stats_path)
         self.mean = stats["mean"].astype(np.float32)
         self.std = stats["std"].astype(np.float32)
 
@@ -927,7 +927,7 @@ class EnergyDataset:
 
     def load_stats(self, cache_path):
         stats_path = os.path.join(cache_path, "energy_stats.npy")
-        stats = np.load(stats_path, allow_pickle=True).item()
+        stats = safe_np_load_dict(stats_path)
         self.mean = stats["mean"].astype(np.float32)
         self.std = stats["std"].astype(np.float32)
 

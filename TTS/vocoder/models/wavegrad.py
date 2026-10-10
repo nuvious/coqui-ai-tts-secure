@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from trainer.trainer_utils import get_optimizer, get_scheduler
 
-from TTS.utils.io import load_fsspec
+from TTS.utils.io import load_fsspec, safe_np_load_dict
 from TTS.vocoder.datasets import WaveGradDataset
 from TTS.vocoder.layers.wavegrad import Conv1d, DBlock, FiLM, UBlock
 from TTS.vocoder.models.base_vocoder import BaseVocoder
@@ -120,7 +120,7 @@ class Wavegrad(BaseVocoder):
         return x
 
     def load_noise_schedule(self, path):
-        beta = np.load(path, allow_pickle=True).item()["beta"]  # pylint: disable=unexpected-keyword-arg
+        beta = safe_np_load_dict(path)["beta"]
         self.compute_noise_level(beta)
 
     @torch.no_grad()
@@ -257,7 +257,7 @@ class Wavegrad(BaseVocoder):
         loss = criterion(noise, noise_hat)
         return {"model_output": noise_hat}, {"loss": loss}
 
-    def train_log(  # pylint: disable=no-self-use
+    def train_log(
         self, batch: Dict, outputs: Dict, logger: "Logger", assets: Dict, steps: int  # pylint: disable=unused-argument
     ) -> Tuple[Dict, np.ndarray]:
         pass
@@ -266,7 +266,7 @@ class Wavegrad(BaseVocoder):
     def eval_step(self, batch: Dict, criterion: nn.Module) -> Tuple[Dict, Dict]:
         return self.train_step(batch, criterion)
 
-    def eval_log(  # pylint: disable=no-self-use
+    def eval_log(
         self, batch: Dict, outputs: Dict, logger: "Logger", assets: Dict, steps: int  # pylint: disable=unused-argument
     ) -> None:
         pass

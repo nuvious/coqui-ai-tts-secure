@@ -1,5 +1,7 @@
-black
+black>=26.3.1
 coverage
-isort
+isort>=5.13
 nose2
-pylint==2.10.2
+pylint>=3.3
+pytest
+tox>=4.4

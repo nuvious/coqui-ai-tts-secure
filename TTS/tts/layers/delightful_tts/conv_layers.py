@@ -148,7 +148,7 @@ class ConvLSTMLinear(nn.Module):
         context = nn.utils.rnn.pad_sequence(context_embedded, batch_first=True)
         return context
 
-    def run_unsorted_inputs(self, fn, context, lens):  # pylint: disable=no-self-use
+    def run_unsorted_inputs(self, fn, context, lens):
         lens_sorted, ids_sorted = torch.sort(lens, descending=True)
         unsort_ids = [0] * lens.size(0)
         for i in range(len(ids_sorted)):  # pylint: disable=consider-using-enumerate
@@ -627,7 +627,7 @@ class LVCBlock(torch.nn.Module):
 
         return x
 
-    def location_variable_convolution(self, x, kernel, bias, dilation=1, hop_size=256):  # pylint: disable=no-self-use
+    def location_variable_convolution(self, x, kernel, bias, dilation=1, hop_size=256):
         """perform location-variable convolution operation on the input sequence (x) using the local convolution kernl.
         Time: 414 μs ± 309 ns per loop (mean ± std. dev. of 7 runs, 1000 loops each), test on NVIDIA V100.
         Args:
