@@ -2,8 +2,8 @@ import os
 from dataclasses import dataclass, field
 
 from coqpit import Coqpit
-from trainer import TrainerArgs, get_last_checkpoint
-from trainer.io import copy_model_files
+from trainer import TrainerArgs
+from trainer.io import copy_model_files, get_last_checkpoint
 from trainer.logging import logger_factory
 from trainer.logging.console_logger import ConsoleLogger
 

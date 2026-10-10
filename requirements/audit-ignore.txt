@@ -1,0 +1,4 @@
+# Advisories accepted for now, one id per line with the reason; `make audit` and CI pass these to pip-audit --ignore-vuln.
+# nltk: model-artifact APIs treat caller-controlled paths as ordinary paths; no fixed release exists and TTS only
+# tokenizes Tortoise input text with nltk.
+PYSEC-2026-3740

@@ -64,6 +64,10 @@ confidence=
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
 disable=missing-docstring,
+        # pylint cannot infer the fields of Coqpit dataclasses, so these error-class checks misfire on every config call.
+        unexpected-keyword-arg,
+        invalid-field-call,
+        method-hidden,
         # Style checks added after pylint 2.10 that the existing code base does not follow; lint only fails on errors.
         too-many-positional-arguments,
         consider-using-f-string,

@@ -5,3 +5,4 @@ nose2
 pylint>=3.3
 pytest
 tox>=4.4
+tox-uv>=1.11

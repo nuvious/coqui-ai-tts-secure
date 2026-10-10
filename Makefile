@@ -93,9 +93,11 @@ lock:	## regenerate the per-Python lock files in requirements/ from requirements
 			-o requirements/lock-py$$v.txt requirements.txt requirements.dev.txt requirements.ja.txt requirements.notebooks.txt || exit 1; \
 	done
 
-audit:	## audit the lock files for known vulnerabilities (CVEs).
+AUDIT_IGNORES := $(shell grep -vE '^\s*(\#|$$)' requirements/audit-ignore.txt | sed 's/^/--ignore-vuln /')
+
+audit:	## audit the lock files for known vulnerabilities (CVEs); accepted ids live in requirements/audit-ignore.txt.
 	for v in 3.10 3.11 3.12 3.13; do \
-		pip-audit --disable-pip --no-deps --progress-spinner off -r requirements/lock-py$$v.txt $(PIP_AUDIT_ARGS) || exit 1; \
+		pip-audit --disable-pip --no-deps --progress-spinner off $(AUDIT_IGNORES) -r requirements/lock-py$$v.txt $(PIP_AUDIT_ARGS) || exit 1; \
 	done
 
 sast:	## run static security analysis (CWEs) on the package.

@@ -38,7 +38,7 @@ class TestPythonApi(unittest.TestCase):
         config = load_config(cls.config_path)
         torch.manual_seed(0)
         model = setup_model(config)
-        save_checkpoint(config, model, None, None, 10, 1, cls.output_path)
+        save_checkpoint(config, model, cls.output_path, current_step=10, epoch=1)
         cls.model_path = os.path.join(cls.output_path, "checkpoint_10.pth")
         cls.tts = TTS(progress_bar=False, gpu=False)
         cls.tts.load_tts_model_by_path(cls.model_path, cls.config_path, gpu=False)

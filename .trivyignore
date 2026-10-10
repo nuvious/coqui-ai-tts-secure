@@ -1,0 +1,2 @@
+# The images run the tts CLI as root on purpose: /root holds the model cache and users mount volumes against it.
+AVD-DS-0002

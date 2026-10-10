@@ -21,6 +21,9 @@ Only the current `dev` branch and the latest tagged release receive fixes.
 
 - `requirements*.txt` hold the version floors the package installs with; a floor
   is raised to the first patched release whenever a dependency gets a CVE.
+- The training loop comes from `coqui-tts-trainer` (the maintained fork of
+  `trainer`, same `trainer` import name) because `trainer` 0.0.36 does not
+  install on Python 3.12 or newer.
 - `requirements/lock-py3.10.txt` through `lock-py3.13.txt` pin the exact set
   used by CI and the Docker images. Regenerate them with `make lock`.
 - `make audit` runs `pip-audit` on every lock file. The `security` GitHub

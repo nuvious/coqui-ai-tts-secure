@@ -24,7 +24,7 @@ class ServerTest(unittest.TestCase):
         cls.config_path = os.path.join(output_path, "config.json")
         config.save_json(cls.config_path)
         model = setup_model(config)
-        save_checkpoint(config, model, None, None, 10, 1, output_path)
+        save_checkpoint(config, model, output_path, current_step=10, epoch=1)
         cls.checkpoint_path = os.path.join(output_path, "checkpoint_10.pth")
 
         cls.args = create_argparser().parse_args([])

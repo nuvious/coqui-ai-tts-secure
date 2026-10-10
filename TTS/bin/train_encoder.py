@@ -224,7 +224,14 @@ def train(model, optimizer, scheduler, criterion, data_loader, eval_data_loader,
             if global_step % c.save_step == 0:
                 # save model
                 save_checkpoint(
-                    c, model, optimizer, None, global_step, epoch, OUT_PATH, criterion=criterion.state_dict()
+                    c,
+                    model,
+                    OUT_PATH,
+                    current_step=global_step,
+                    epoch=epoch,
+                    optimizer=optimizer,
+                    scheduler=None,
+                    criterion=criterion.state_dict(),
                 )
 
             end_time = time.time()
@@ -253,11 +260,11 @@ def train(model, optimizer, scheduler, criterion, data_loader, eval_data_loader,
                 best_loss,
                 c,
                 model,
-                optimizer,
-                None,
-                global_step,
-                epoch,
                 OUT_PATH,
+                current_step=global_step,
+                epoch=epoch,
+                optimizer=optimizer,
+                scheduler=None,
                 criterion=criterion.state_dict(),
             )
             model.train()

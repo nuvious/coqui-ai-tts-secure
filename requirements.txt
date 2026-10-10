@@ -29,7 +29,7 @@ pandas>=1.4,<3
 # deps for training
 matplotlib>=3.7.0
 # coqui stack
-trainer>=0.0.36
+coqui-tts-trainer>=0.3.3,<0.4
 # config management
 coqpit>=0.0.16
 # chinese g2p deps
