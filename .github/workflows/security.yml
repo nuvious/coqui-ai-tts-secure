@@ -108,6 +108,8 @@ jobs:
           scanners: vuln,secret,misconfig
           severity: HIGH,CRITICAL
           trivyignores: .trivyignore
+          # Without this the action scans all severities for SARIF and exits non-zero on informational notes.
+          limit-severities-for-sarif: true
           exit-code: "1"
           format: sarif
           output: trivy.sarif
