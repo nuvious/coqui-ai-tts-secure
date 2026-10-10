@@ -18,6 +18,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   pip-audit:
     name: pip-audit (py${{ matrix.python-version }})
@@ -103,6 +107,7 @@ jobs:
           scan-type: fs
           scanners: vuln,secret,misconfig
           severity: HIGH,CRITICAL
+          trivyignores: .trivyignore
           exit-code: "1"
           format: sarif
           output: trivy.sarif
