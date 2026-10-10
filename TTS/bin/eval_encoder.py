@@ -52,8 +52,7 @@ def compute_encoder_accuracy(dataset_items, encoder_manager):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="""Compute the accuracy of the encoder.\n\n"""
-        """
+        description="""Compute the accuracy of the encoder.\n\n""" """
         Example runs:
         python TTS/bin/eval_encoder.py emotion_encoder_model.pth emotion_encoder_config.json  dataset_config.json
         """,

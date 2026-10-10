@@ -47,7 +47,9 @@ def string2filename(string):
 def get_audio_size(audiopath):
     extension = audiopath.rpartition(".")[-1].lower()
     if extension not in {"mp3", "wav", "flac"}:
-        raise RuntimeError(f"The audio format {extension} is not supported, please convert the audio files to mp3, flac, or wav format!")
+        raise RuntimeError(
+            f"The audio format {extension} is not supported, please convert the audio files to mp3, flac, or wav format!"
+        )
 
     audio_info = mutagen.File(audiopath).info
     return int(audio_info.length * audio_info.sample_rate)
@@ -456,9 +458,11 @@ class TTSDataset(Dataset):
 
             # lengths adjusted by the reduction factor
             mel_lengths_adjusted = [
-                m.shape[1] + (self.outputs_per_step - (m.shape[1] % self.outputs_per_step))
-                if m.shape[1] % self.outputs_per_step
-                else m.shape[1]
+                (
+                    m.shape[1] + (self.outputs_per_step - (m.shape[1] % self.outputs_per_step))
+                    if m.shape[1] % self.outputs_per_step
+                    else m.shape[1]
+                )
                 for m in mel
             ]
 
@@ -564,14 +568,8 @@ class TTSDataset(Dataset):
                 "audio_unique_names": batch["audio_unique_name"],
             }
 
-        raise TypeError(
-            (
-                "batch must contain tensors, numbers, dicts or lists;\
-                         found {}".format(
-                    type(batch[0])
-                )
-            )
-        )
+        raise TypeError(("batch must contain tensors, numbers, dicts or lists;\
+                         found {}".format(type(batch[0]))))
 
 
 class PhonemeDataset(Dataset):

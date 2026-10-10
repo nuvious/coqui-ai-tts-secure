@@ -716,8 +716,9 @@ class Tortoise(BaseTTS):
             self.autoregressive = self.autoregressive.to(self.device)
             if verbose:
                 print("Generating autoregressive samples..")
-            with self.temporary_cuda(self.autoregressive) as autoregressive, torch.autocast(
-                device_type="cuda", dtype=torch.float16, enabled=half
+            with (
+                self.temporary_cuda(self.autoregressive) as autoregressive,
+                torch.autocast(device_type="cuda", dtype=torch.float16, enabled=half),
             ):
                 for b in tqdm(range(num_batches), disable=not verbose):
                     codes = autoregressive.inference_speech(
@@ -738,8 +739,9 @@ class Tortoise(BaseTTS):
             self.autoregressive_batch_size = orig_batch_size  # in the case of single_sample
 
             clip_results = []
-            with self.temporary_cuda(self.clvp) as clvp, torch.autocast(
-                device_type="cuda", dtype=torch.float16, enabled=half
+            with (
+                self.temporary_cuda(self.clvp) as clvp,
+                torch.autocast(device_type="cuda", dtype=torch.float16, enabled=half),
             ):
                 for batch in tqdm(samples, disable=not verbose):
                     for i in range(batch.shape[0]):

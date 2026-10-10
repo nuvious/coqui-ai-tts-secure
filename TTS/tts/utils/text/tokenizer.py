@@ -203,10 +203,8 @@ class TTSTokenizer:
                         )
                         new_config.phonemizer = phonemizer.name()
                     except KeyError as e:
-                        raise ValueError(
-                            f"""No phonemizer found for language {config.phoneme_language}.
-                            You may need to install a third party library for this language."""
-                        ) from e
+                        raise ValueError(f"""No phonemizer found for language {config.phoneme_language}.
+                            You may need to install a third party library for this language.""") from e
 
         return (
             TTSTokenizer(

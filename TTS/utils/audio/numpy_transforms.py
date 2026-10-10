@@ -71,6 +71,8 @@ def amp_to_db(*, x: np.ndarray = None, gain: float = 1, base: int = 10, **kwargs
     """
     assert (x < 0).sum() == 0, " [!] Input values must be non-negative."
     return gain * _log(np.maximum(1e-8, x), base)
+
+
 def db_to_amp(*, x: np.ndarray = None, gain: float = 1, base: int = 10, **kwargs) -> np.ndarray:
     """Convert decibels spectrogram to amplitude spectrogram.
 

@@ -58,12 +58,21 @@ def build_snapshot() -> dict:
                 "phoneme_ids": phonemes.text_to_ids(text),
             }
         )
-    return {"phonemizer_backend": phonemes.phonemizer.backend, "sentences": entries}
+    return {
+        "phonemizer_backend": phonemes.phonemizer.backend,
+        "phonemizer_version": phonemes.phonemizer.backend_version,
+        "sentences": entries,
+    }
 
 
 def render_snapshot(snapshot: dict) -> str:
     """Serialize the snapshot with each id list on a single line."""
-    lines = ["{", f'  "phonemizer_backend": {json.dumps(snapshot["phonemizer_backend"])},', '  "sentences": [']
+    lines = [
+        "{",
+        f'  "phonemizer_backend": {json.dumps(snapshot["phonemizer_backend"])},',
+        f'  "phonemizer_version": {json.dumps(snapshot["phonemizer_version"])},',
+        '  "sentences": [',
+    ]
     for index, entry in enumerate(snapshot["sentences"]):
         lines.append("    {")
         for key in ("text", "cleaned", "grapheme_ids", "phonemized", "phoneme_ids"):
@@ -105,12 +114,21 @@ class TestTokenizerGolden(unittest.TestCase):
             with self.subTest(text=actual["text"]):
                 self.assertEqual(actual["grapheme_ids"], expected["grapheme_ids"])
 
+    def _require_same_phonemizer(self):
+        """Phoneme output depends on the installed espeak-ng release, so only an identical release is compared."""
+        actual = (self.snapshot["phonemizer_backend"], self.snapshot["phonemizer_version"])
+        expected = (self.expected["phonemizer_backend"], self.expected.get("phonemizer_version"))
+        if actual != expected:
+            self.skipTest(f"fixture was generated with {expected}, installed phonemizer is {actual}")
+
     def test_phonemized_text_matches_fixture(self):
+        self._require_same_phonemizer()
         for actual, expected in self._pairs():
             with self.subTest(text=actual["text"]):
                 self.assertEqual(actual["phonemized"], expected["phonemized"])
 
     def test_phoneme_ids_match_fixture(self):
+        self._require_same_phonemizer()
         for actual, expected in self._pairs():
             with self.subTest(text=actual["text"]):
                 self.assertEqual(actual["phoneme_ids"], expected["phoneme_ids"])

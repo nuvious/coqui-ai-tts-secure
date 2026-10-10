@@ -1,4 +1,5 @@
 """Search a good noise schedule for WaveGrad for a given number of inference iterations"""
+
 import argparse
 from itertools import product as cartesian_product
 

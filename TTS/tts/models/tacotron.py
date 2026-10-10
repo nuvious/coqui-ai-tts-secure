@@ -101,12 +101,16 @@ class Tacotron(BaseTacotron):
                 num_mel=self.decoder_output_dim,
                 encoder_output_dim=self.encoder_in_features,
                 capacitron_VAE_embedding_dim=self.capacitron_vae.capacitron_VAE_embedding_dim,
-                speaker_embedding_dim=self.embedded_speaker_dim
-                if self.use_speaker_embedding and self.capacitron_vae.capacitron_use_speaker_embedding
-                else None,
-                text_summary_embedding_dim=self.capacitron_vae.capacitron_text_summary_embedding_dim
-                if self.capacitron_vae.capacitron_use_text_summary_embeddings
-                else None,
+                speaker_embedding_dim=(
+                    self.embedded_speaker_dim
+                    if self.use_speaker_embedding and self.capacitron_vae.capacitron_use_speaker_embedding
+                    else None
+                ),
+                text_summary_embedding_dim=(
+                    self.capacitron_vae.capacitron_text_summary_embedding_dim
+                    if self.capacitron_vae.capacitron_use_text_summary_embeddings
+                    else None
+                ),
             )
 
         # backward pass decoder
@@ -171,9 +175,9 @@ class Tacotron(BaseTacotron):
             encoder_outputs, *capacitron_vae_outputs = self.compute_capacitron_VAE_embedding(
                 encoder_outputs,
                 reference_mel_info=[mel_specs, mel_lengths],
-                text_info=[inputs, text_lengths]
-                if self.capacitron_vae.capacitron_use_text_summary_embeddings
-                else None,
+                text_info=(
+                    [inputs, text_lengths] if self.capacitron_vae.capacitron_use_text_summary_embeddings else None
+                ),
                 speaker_embedding=embedded_speakers if self.capacitron_vae.capacitron_use_speaker_embedding else None,
             )
         else:
@@ -237,13 +241,13 @@ class Tacotron(BaseTacotron):
             # B x capacitron_VAE_embedding_dim
             encoder_outputs, *_ = self.compute_capacitron_VAE_embedding(
                 encoder_outputs,
-                reference_mel_info=[aux_input["style_mel"], reference_mel_length]
-                if aux_input["style_mel"] is not None
-                else None,
+                reference_mel_info=(
+                    [aux_input["style_mel"], reference_mel_length] if aux_input["style_mel"] is not None else None
+                ),
                 text_info=[style_text_embedding, style_text_length] if aux_input["style_text"] is not None else None,
-                speaker_embedding=aux_input["d_vectors"]
-                if self.capacitron_vae.capacitron_use_speaker_embedding
-                else None,
+                speaker_embedding=(
+                    aux_input["d_vectors"] if self.capacitron_vae.capacitron_use_speaker_embedding else None
+                ),
             )
         if self.num_speakers > 1:
             if not self.use_d_vector_file:
@@ -377,9 +381,7 @@ class Tacotron(BaseTacotron):
         audio = ap.inv_spectrogram(pred_linear_spec.T)
         return figures, {"audio": audio}
 
-    def train_log(
-        self, batch: dict, outputs: dict, logger: "Logger", assets: dict, steps: int
-    ) -> None:
+    def train_log(self, batch: dict, outputs: dict, logger: "Logger", assets: dict, steps: int) -> None:
         figures, audios = self._create_logs(batch, outputs, self.ap)
         logger.train_figures(steps, figures)
         logger.train_audios(steps, audios, self.ap.sample_rate)

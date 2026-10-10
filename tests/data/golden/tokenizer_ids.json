@@ -1,5 +1,6 @@
 {
   "phonemizer_backend": "espeak-ng",
+  "phonemizer_version": "1.52.0",
   "sentences": [
     {
       "text": "Dr. Smith paid $12.50 for 3 apples on Jan. 2nd, 1999.",

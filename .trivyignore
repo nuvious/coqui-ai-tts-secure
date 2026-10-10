@@ -1,2 +1,4 @@
 # The images run the tts CLI as root on purpose: /root holds the model cache and users mount volumes against it.
+# Trivy 0.70 reports the rule as DS-0002; older and newer builds use the AVD prefix.
+DS-0002
 AVD-DS-0002

@@ -544,8 +544,7 @@ class FreeVC(BaseVC):
         audio = audio[0][0].data.cpu().float().numpy()
         return audio
 
-    def eval_step():
-        ...
+    def eval_step(): ...
 
     @staticmethod
     def init_from_config(config: FreeVCConfig, samples: Union[List[List], List[Dict]] = None, verbose=True):
@@ -558,5 +557,4 @@ class FreeVC(BaseVC):
         if eval:
             self.eval()
 
-    def train_step():
-        ...
+    def train_step(): ...

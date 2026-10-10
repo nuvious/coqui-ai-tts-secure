@@ -1,4 +1,5 @@
 """Get detailed info about the working environment."""
+
 import os
 import platform
 import sys

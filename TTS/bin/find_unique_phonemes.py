@@ -1,4 +1,5 @@
 """Find all the unique characters in a dataset"""
+
 import argparse
 import multiprocessing
 from argparse import RawTextHelpFormatter
@@ -21,8 +22,7 @@ def main():
     global c, phonemizer
     # pylint: disable=bad-option-value
     parser = argparse.ArgumentParser(
-        description="""Find all the unique characters or phonemes in a dataset.\n\n"""
-        """
+        description="""Find all the unique characters or phonemes in a dataset.\n\n""" """
     Example runs:
 
     python TTS/bin/find_unique_phonemes.py --config_path config.json
