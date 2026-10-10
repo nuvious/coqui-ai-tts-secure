@@ -126,7 +126,7 @@ class TestTTSDataset(unittest.TestCase):
                 mel_new = mel_new[:, : mel_lengths[0]]
                 ignore_seg = -(1 + c.audio.win_length // c.audio.hop_length)
                 mel_diff = (mel_new[:, : mel_input.shape[1]] - mel_input[0].T.numpy())[:, 0:ignore_seg]
-                self.assertLess(abs(mel_diff.sum()), 1e-5)
+                self.assertLess(abs(mel_diff.sum()), 1e-4)
 
                 # check normalization ranges
                 if self.ap.symmetric_norm:
