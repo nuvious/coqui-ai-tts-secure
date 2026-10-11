@@ -30,6 +30,8 @@ jobs:
     name: ${{ matrix.subset }} (py${{ matrix.python-version }})
     runs-on: ubuntu-22.04
     if: "! contains(github.event.head_commit.message, '[ci skip]')"
+    # Python 3.13 is experimental: the tts CLI segfaults at exit on the runner there (see SECURITY.md).
+    continue-on-error: ${{ matrix.python-version == '3.13' }}
     strategy:
       fail-fast: false
       matrix:

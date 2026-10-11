@@ -96,3 +96,7 @@ built by `create_app` when `main()` runs.
   used for tokenizing text passed to the Tortoise model.
 - Python 3.9 reached end of life in October 2025 and many dependencies no longer
   publish fixed releases for it, so it is no longer supported.
+- Python 3.13 is supported on a best-effort basis: the test matrix runs it but
+  does not block on it, because the `tts` command line crashed with a
+  segmentation fault at process exit on the GitHub runner while every in-process
+  test passed. Python 3.10 to 3.12 are fully supported.

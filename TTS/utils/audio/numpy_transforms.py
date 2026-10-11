@@ -290,7 +290,6 @@ def compute_f0(
         fmax=pitch_fmax,
         sr=sample_rate,
         frame_length=win_length,
-        win_length=win_length // 2,
         hop_length=hop_length,
         pad_mode=stft_pad_mode,
         center=center,

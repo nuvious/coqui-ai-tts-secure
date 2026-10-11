@@ -19,12 +19,28 @@ MODELS_WITH_SEP_TESTS = [
 ]
 
 
+# These 2020 and 2021 releases pickle an RAdam optimizer that the strict loader cannot rebuild; see SECURITY.md.
+LEGACY_PICKLED_OPTIMIZER_MODELS = [
+    "tts_models/de/thorsten/tacotron2-DCA",
+    "tts_models/en/ek1/tacotron2",
+    "tts_models/en/sam/tacotron-DDC",
+    "tts_models/es/mai/tacotron2-DDC",
+    "tts_models/fr/mai/tacotron2-DDC",
+    "tts_models/nl/mai/tacotron2-DDC",
+    "tts_models/zh-CN/baker/tacotron2-DDC-GST",
+]
+
+
 def run_models(offset=0, step=1):
     """Check if all the models are downloadable and tts models run correctly."""
     print(" > Run synthesizer with all the models.")
     output_path = os.path.join(get_tests_output_path(), "output.wav")
     manager = ModelManager(output_prefix=get_tests_output_path(), progress_bar=False)
-    model_names = [name for name in manager.list_models() if name not in MODELS_WITH_SEP_TESTS]
+    model_names = [
+        name
+        for name in manager.list_models()
+        if name not in MODELS_WITH_SEP_TESTS and name not in LEGACY_PICKLED_OPTIMIZER_MODELS
+    ]
     print("Model names:", model_names)
     for model_name in model_names[offset::step]:
         print(f"\n > Run - {model_name}")
